@@ -1,20 +1,19 @@
-
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, AUTHORIZATION};
 use dotenv::dotenv;
 use std::env;
 use serde_json::json;
 
 
-pub async fn groq_request() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn groqRequest() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let api_key = env::var("API_KEY")?;
+    let apiKey = env::var("GROG_CLOUD_API_DEV_TOKEN")?;
 
     // Set up the headers
     let mut headers = HeaderMap::new();
     headers.insert(
         AUTHORIZATION,
-        HeaderValue::from_str(&format!("Bearer {}", api_key))?,
+        HeaderValue::from_str(&format!("Bearer {}", apiKey))?,
     );
     headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
 
@@ -44,18 +43,18 @@ pub async fn groq_request() -> Result<(), Box<dyn std::error::Error>> {
         .json(&body)
         .send()
         .await?;
-    // Print the response for debugging
+    // Print the response 
     let resp_text = resp.text().await?;
     println!("Response: {}", resp_text);
 
     let start = resp_text.find("content")
         .ok_or_else(|| "Content not found")?;
-    let content_start = start + 10;
+    let contentStart = start + 10;
 
-    let end = resp_text[content_start..].find("logprobs")
+    let end = resp_text[contentStart..].find("logprobs")
         .ok_or_else(|| "End of content not found")?;
 
-    let extracted = &resp_text[content_start..content_start + end - 4];
+    let extracted = &resp_text[contentStart..contentStart + end - 4];
     println!("Extracted content: {}", extracted);
     Ok(())
 }
