@@ -3,8 +3,7 @@ use dotenv::dotenv;
 use std::env;
 use serde_json::json;
 
-
-pub async fn groqRequest() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn groqRequest(prompt: &str) -> Result<String, Box<dyn std::error::Error>> {
     dotenv().ok();
 
     let apiKey = env::var("GROG_CLOUD_API_DEV_TOKEN")?;
@@ -25,11 +24,11 @@ pub async fn groqRequest() -> Result<(), Box<dyn std::error::Error>> {
         "messages": [
             {
                 "role": "user",
-                "content": "Hello, can you provide some information?"
+                "content": prompt
             }
         ],
-        "model": "llama3-8b-8192",
-        "temperature": 1,
+        "model": "mixtral-8x7b-32768",
+        "temperature": 0.7,
         "max_tokens": 1024,
         "top_p": 1,
         "stream": false,
@@ -43,19 +42,28 @@ pub async fn groqRequest() -> Result<(), Box<dyn std::error::Error>> {
         .json(&body)
         .send()
         .await?;
-    // Print the response 
-    let resp_text = resp.text().await?;
-    println!("Response: {}", resp_text);
 
-    let start = resp_text.find("content")
-        .ok_or_else(|| "Content not found")?;
-    let contentStart = start + 10;
+    if !resp.status().is_success() {
+        let error_body = resp.text().await?;
+        return Err(format!("API request failed: {}", error_body).into());
+    }
 
-    let end = resp_text[contentStart..].find("logprobs")
-        .ok_or_else(|| "End of content not found")?;
+    // Parse the response
+    let respJson: serde_json::Value = resp.json().await?;
 
-    let extracted = &resp_text[contentStart..contentStart + end - 4];
-    println!("Extracted content: {}", extracted);
-    Ok(())
+    println!("Debug: Full API Response: {}", serde_json::to_string_pretty(&respJson)?);
+
+    let content = respJson["choices"]
+        .get(0)
+        .and_then(|choice| choice["message"]["content"].as_str())
+        .ok_or_else(|| {
+            let error_msg = format!("Failed to extract content. Response structure: {:?}", respJson);
+            println!("Debug: {}", error_msg);
+            error_msg
+        })?
+        .to_string();
+
+    Ok(content)
 }
+
 
