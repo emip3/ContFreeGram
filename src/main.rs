@@ -1,8 +1,12 @@
 mod groqApi;
-use groqApi::groqRequest;
-#[tokio::main]
+mod menuInterface;
 
+use menuInterface::runMenu;
+
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    groqRequest().await?;
+    runMenu().await?;
     Ok(())
 }
+
+
