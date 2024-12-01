@@ -61,7 +61,7 @@ After installation, restart your terminal or run `source $HOME/.cargo/env` to up
 1. Clone the repository:
 
 ```shellscript
-git clone https://github.com/your-username/PhrasePilot.git
+git clone https://github.com/emip3/PhrasePilot.git
 cd PhrasePilot
 ```
 
